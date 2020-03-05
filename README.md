@@ -8,7 +8,7 @@ This [paper](https://www.biorxiv.org/content/early/2019/01/13/478370) describes 
 The `MWSL` R package allows for 
 * Estimation of permutation-based MWSL and corresponding effective number of tests (ENT)
 * Estimation of closed-form-expression MWSL and corresponding effective number of tests (Meff)
-* Identification of differentially regulated metabolomics variates
+* Identification of differentially regulated metabolomics variates for a specific clinical outcome
 
 ```
 devtools::install_github("AlinaPeluso/PhenoMeNal", subdir="MWSL")
@@ -18,10 +18,9 @@ library(MWSL)
 
 ## Section 1: Exploratory analysis
 
-
 We aim to investigate the association between human serum $^{1}$H NMR metabolic profiles and various clinical outcomes in the Multi-Ethnic Study of Atherosclerosis ([MESA](https://academic.oup.com/aje/article/156/9/871/255904)). The data have been extensively described in this [paper](https://www.ncbi.nlm.nih.gov/pubmed/28823158).  
 
-The original study considers three sets of NMR spectra data: (1) a standard water-suppressed one-dimensional spectrum (NOESY), and (2) a Carr-Purcell-Meiboom-Gill spectrum (CPMG), and (3) a lower resolution version of the CPMG data (BINNED). The BINNED version consists of $M$=655 features, while the NOESY and CPMG contain $M$=30,590 features. The BINNED data sample comprises of `n = 3500` individuals, while the NOESY and CPMG data have `n = 3,867` individuals. 
+The original study considers three sets of NMR spectra data: (1) a standard water-suppressed one-dimensional spectrum (NOESY), and (2) a Carr-Purcell-Meiboom-Gill spectrum (CPMG), and (3) a lower resolution version of the CPMG data (BINNED). The BINNED version consists of `M = 655` features, while the NOESY and CPMG contain `M = 30,590` features. The BINNED data sample comprises of `n = 3500` individuals, while the NOESY and CPMG data have `n = 3,867` individuals. 
 
 To illustrate the package capabilities, here we reproduce the results for the BINNED version of the data. 
 
@@ -29,16 +28,46 @@ To illustrate the package capabilities, here we reproduce the results for the BI
 data("MESA_binned")
 ```
 
+#### Metabolomics variates
 
-#### Descriptive statistics for the fixed effects confounders
+For this specific analysis the metabolomics variates are anonimised and simply referred to as `V1,V2,...,V655`.
+```
+features <- MESA_binned[,23:(ncol(MESA_binned)-1)]
+```
+
+Descriptive statistics of the metabolomics variates:
+
+`
+t(round(sapply(features, function(x) c(mean=mean(x),sd=sd(x),median=median(x),min=min(x),max=max(x))),2))
+`
+| feature | mean  | sd    | median | min     | max   |
+|---------|-------|-------|--------|---------|-------|
+| V1      | 0\.13 | 0\.98 | 0\.03  | \-2\.44 | 5\.33 |
+| V2      | 0\.15 | 0\.78 | 0\.05  | \-1\.66 | 3\.73 |
+| V3      | 0\.05 | 0\.95 | 0\.02  | \-3\.17 | 3\.83 |
+| V4      | 2\.85 | 0\.99 | 2\.79  | 0\.04   | 6\.38 |
+| V5      | 1\.75 | 0\.99 | 1\.73  | \-2\.29 | 5\.85 |
+| …       | …     | …     | …      | …       | …     |
+| V651    | 0\.04 | 1\.01 | 0\.03  | \-7\.21 | 4\.25 |
+| V652    | 0\.01 | 1\.01 | 0\.04  | \-6\.48 | 4\.63 |
+| V653    | 0     | 1\.01 | 0\.03  | \-4\.81 | 5\.51 |
+| V654    | 0\.03 | 1\.01 | 0\.03  | \-3\.74 | 4\.08 |
+| V655    | 0\.02 | 1\.01 | 0\.03  | \-4\.09 | 4\.54 |
+
+
+#### Fixed effects confounders
 
 Briefly, the cohort includes participants (51\% females, 49\% males), aged 44-84 years, (mean age of 63 years) from four different ethnic groups: Chinese-American, African-American, Hispanic, and Caucasian, all recruited between 2000-2002 at clinical centres in the United States and free of symptomatic cardiovascular disease at baseline. Demographic, medical history, anthropometric, and lifestyle data, as well as serum samples were collected, together with information on diabetes, and lipid and blood pressure treatment. 
 
 ```
 MESA_binned$male <- ifelse(MESA_binned$sex<2,1,0)
 confounders <- MESA_binned[,c("age","male","height","ethnicityH","ethnicityAA","ethnicityCA","smokingF","smokingC","ldl_chol","hdl_chol","sbp","bp_treatment","diabetes","lipids_treatment")]
+```
 
+Descriptive statistics of the clinical outcomes measures:
+```
 t(round(sapply(MESA_binned[,c(7,9:22,ncol(MESA_binned))], function(x) c(mean=mean(x),sd=sd(x),median=median(x),min=min(x),max=max(x))),3))
+
 ```
 | confounder        | mean     | sd      | median | min    | max    |
 |-------------------|----------|---------|--------|--------|--------|
@@ -61,14 +90,18 @@ t(round(sapply(MESA_binned[,c(7,9:22,ncol(MESA_binned))], function(x) c(mean=mea
 
 
 
-#### Descriptive statistics for the clinical outcomes measures
+
+#### Clinical outcomes measures
 
 The outcomes of interest are glucose concentrations and the body mass index or BMI. 
 
 ```
 glucose <- MESA_binned[,1]; log_glucose <- MESA_binned[,2]; bmi <- MESA_binned[,7]; log_bmi <- MESA_binned[,8];
 outcomes <- MESA_binned[,c(1:4)]
+```
 
+Descriptive statistics of the clinical outcomes measures:
+```
 t(round(sapply(MESA_binned[,c(1:4)], function(x) c(mean=mean(x),sd=sd(x),median=median(x),min=min(x),max=max(x))),2))
 ```
 | outcome      | mean   | sd    | median | min    | max    |
@@ -79,7 +112,7 @@ t(round(sapply(MESA_binned[,c(1:4)], function(x) c(mean=mean(x),sd=sd(x),median=
 | log\_bmi     | 3\.32  | 0\.18 | 3\.31  | 2\.73  | 4\.12  |
 
 
-##### Plot of the distributions of the clinical outcomes measures
+Plot of the distributions of the clinical outcomes measures:
 ```
 par(mfrow=c(2,4))
 for (i in 1:ncol(outcomes)){hist(outcomes[,i],main=names(outcomes)[i],xlab=NULL)}
@@ -108,9 +141,11 @@ for (j in 1:length(methods)){
     rmesa_FWERperm[[i]][j,8] <- rmesa$t1err.percent
   }
 }
+```
 
 
-# *** Plot MWSL and ENT estimates from the permutation procedure
+##### Plot of the ENT estimates from the permutation procedure
+```
 df_rmesa_FWERperm <- do.call(rbind,rmesa_FWERperm)
 df1_rmesa_FWERperm<- data.frame(
   outcome = c('glucose','glucose','glucose',
@@ -139,6 +174,9 @@ df1_rmesa_FWERperm<- data.frame(
 )
 ```
 ![resMESAbinned](./Figures/resMESAbinned.png)
+
+From the conventional permutation procedure applied to the BINNED data, when the real features are considered, there is instability in the estimation of the ENT across the different outcomes, and in particular the ENT estimate for glucose is above the ANT. When the feature data are simulated from a multivariate log-Normal or Normal distribution, the ENT estimates are stable across the different outcomes and remain bounded below the total number of features with an average ENT of 352 and an R ratio of 53.8%. 
+
 
 
 
