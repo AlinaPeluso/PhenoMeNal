@@ -124,6 +124,33 @@ for (i in 1:ncol(outcomes)){boxplot(outcomes[,i],main=names(outcomes)[i],xlab=NU
 
 ## Section 2: Permutation-based MWSL and ENT estimation
 
+`MWSL::FWERperm` performs the estimation of permutation-based metabolome-wide significance level (`MWSL`) and the corresponding effective number of tests (`ENT`). The procedure controls the FWER at the &alpha; level. The type I error rate (false-positive rate) is measured as the number of occurrences of having a p-value less or equal than the MWSL, that is when a true null hypothesis is being rejected. 
+
+Inputs:
+* `outcome` a vector of `n` data point values of a continuous (both symmetric and skewed), discrete binary (0/1) or count outcome, or a data frame with `n` observations and column variables `time` (or `time1` and `time2`) and `status` for a time-to-event survival outcome.
+* `features` a data frame of `n` observations (rows) and `M` features e.g. metabolic profiles (columns).
+* `confounders` an optional data frame of `n` observations (rows) and `P` fixed effects confounders (columns). Default to `confounders`=`NULL`.
+* `methods` an optional string which can take values `'identity'` if no transformation is applied to the data, or `'mN'` (or `'mlogN'`) when the set of features is simulated via a multivariate Normal (or multivariate log-Normal) distribution. Default to `methods`=`'mN'`.
+* `n.permutation` an optional numeric value. Default to `n.permutation`=10,000. 
+* `alpha` an optional probability value. Default to `alpha`=0.05. 
+* `verbose` an optional logical value which allows output some status messages while computing. Default to `verbose`=`TRUE`. 
+
+Outputs:
+* `matPvals` the matrix of p-values for the `M` features (columns) and the `n.permutation` (rows).
+* `q` the vector of minimum p-values of length `n.permutation`.
+* `res` the vector of result estimates: 
+  - `MWSL` = metabolome-wide significance level (MWSL);
+  - `MWSL_CI.up` = upper value `alpha`\%-confidence interval MWSL;
+  - `MWSL_CI.low` = lower value `alpha`\%-confidence interval MWSL.
+  - `ENT` = effective number of tests (ENT);
+  - `ENT_CI.up` = upper value `alpha`\%-confidence interval ENT;
+  - `ENT_CI.low` = lower value `alpha`\%-confidence interval ENT;
+  - `R.percent` = ENT/M.
+* `t1err.percent` the estimated type I error (\%).
+
+Optimal performances in terms of computational time are achieved when the procedure runs on a multi-core computer as parallel computing is applied within the function to deal with the heaviest steps.
+
+Run the function across the clinical outcomes measures:
 ```
 methods <- c('identity','mN','mlogN')
 mat <- matrix(NA,3,8)
@@ -144,8 +171,45 @@ for (j in 1:length(methods)){
 }
 ```
 
+Explore the results:
+```
+rmesa_FWERperm
+```
 
-##### Plot of the ENT estimates from the permutation procedure
+Glucose
+|          | MWSL       | MWSL\_CI\.up | MWSL\_CI\.low | ENT      | ENT\_CI\.up | ENT\_CI\.low | R\.percent | t1err\.percent |
+|----------|------------|--------------|---------------|----------|-------------|--------------|------------|----------------|
+| identity | 0\.0000685 | 0\.0000665   | 0\.0000713    | 729\.803 | 751\.496    | 701\.647     | 111\.42    | 4\.95          |
+| mN       | 0\.0001430 | 0\.0001380   | 0\.0001508    | 349\.737 | 362\.19     | 331\.658     | 53\.39     | 4\.97          |
+| mlogN    | 0\.0001376 | 0\.0001296   | 0\.0001447    | 363\.358 | 385\.699    | 345\.604     | 55\.47     | 5\.14          |
+
+log(Glucose)
+|          | MWSL       | MWSL\_CI\.up | MWSL\_CI\.low | ENT      | ENT\_CI\.up | ENT\_CI\.low | R\.percent | t1err\.percent |
+|----------|------------|--------------|---------------|----------|-------------|--------------|------------|----------------|
+| identity | 0\.0001018 | 0\.0000982   | 0\.0001053    | 491\.344 | 508\.917    | 474\.867     | 75\.01     | 5\.06          |
+| mN       | 0\.0001434 | 0\.0001378   | 0\.0001483    | 348\.567 | 362\.855    | 337\.154     | 53\.22     | 5\.07          |
+| mlogN    | 0\.0001392 | 0\.0001310   | 0\.0001442    | 359\.09  | 381\.818    | 346\.816     | 54\.82     | 4\.98          |
+
+BMI
+|          | MWSL       | MWSL\_CI\.up | MWSL\_CI\.low | ENT      | ENT\_CI\.up | ENT\_CI\.low | R\.percent | t1err\.percent |
+|----------|------------|--------------|---------------|----------|-------------|--------------|------------|----------------|
+| identity | 0\.0001262 | 0\.0001216   | 0\.0001335    | 396\.188 | 411\.0372   | 374\.544     | 60\.49     | 5\.18          |
+| mN       | 0\.0001470 | 0\.0001401   | 0\.0001534    | 340\.142 | 357\.0032   | 325\.845     | 51\.93     | 5\.20          |
+| mlogN    | 0\.0001402 | 0\.0001345   | 0\.0001468    | 356\.707 | 371\.7413   | 340\.712     | 54\.46     | 5\.00          |
+
+log(BMI)
+|          | MWSL       | MWSL\_CI\.up | MWSL\_CI\.low | ENT      | ENT\_CI\.up | ENT\_CI\.low | R\.percent | t1err\.percent |
+|----------|------------|--------------|---------------|----------|-------------|--------------|------------|----------------|
+| identity | 0\.0001313 | 0\.0001266   | 0\.0001377    | 380\.688 | 394\.8619   | 363\.169     | 58\.12     | 5\.08          |
+| mN       | 0\.0001512 | 0\.0001447   | 0\.0001567    | 330\.715 | 345\.6358   | 319\.064     | 50\.49     | 5\.12          |
+| mlogN    | 0\.0001356 | 0\.0001296   | 0\.0001410    | 368\.722 | 385\.7733   | 354\.6       | 56\.29     | 4\.92          |
+
+
+The permutation procedure controls the FWER at the &alpha; level set it to 5%.
+
+
+
+Plot of the ENT estimates from the permutation procedure:
 ```
 df_rmesa_FWERperm <- do.call(rbind,rmesa_FWERperm)
 df1_rmesa_FWERperm<- data.frame(
@@ -177,6 +241,8 @@ df1_rmesa_FWERperm<- data.frame(
 ![resMESAbinned](./Figures/resMESAbinned.png)
 
 From the conventional permutation procedure applied to the BINNED data, when the real features are considered, there is instability in the estimation of the ENT across the different outcomes, and in particular the ENT estimate for glucose is above the ANT. When the feature data are simulated from a multivariate log-Normal or Normal distribution, the ENT estimates are stable across the different outcomes and remain bounded below the total number of features with an average ENT of 352 and an R ratio of 53.8%. 
+
+
 
 
 
