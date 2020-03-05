@@ -126,7 +126,7 @@ for (i in 1:ncol(outcomes)){boxplot(outcomes[,i],main=names(outcomes)[i],xlab=NU
 
 `MWSL::FWERperm` performs the estimation of permutation-based metabolome-wide significance level (`MWSL`) and the corresponding effective number of tests (`ENT`). The procedure controls the FWER at the &alpha; level. The type I error rate (false-positive rate) is measured as the number of occurrences of having a p-value less or equal than the MWSL, that is when a true null hypothesis is being rejected. 
 
-Inputs:
+Arguments:
 * `outcome` a vector of `n` data point values of a continuous (both symmetric and skewed), discrete binary (0/1) or count outcome, or a data frame with `n` observations and column variables `time` (or `time1` and `time2`) and `status` for a time-to-event survival outcome.
 * `features` a data frame of `n` observations (rows) and `M` features e.g. metabolic profiles (columns).
 * `confounders` an optional data frame of `n` observations (rows) and `P` fixed effects confounders (columns). Default to `confounders`=`NULL`.
@@ -248,5 +248,47 @@ From the conventional permutation procedure applied to the BINNED data, when the
 
 
 ## Section 3: Closed form expression eigenvalues-based MWSL and ENT estimation
+
+Approximation methods based on the spectral decomposition of the correlation matrix of the metabolomics variates are employed to estimate a closed-form-expression significance level to be used for multiple tests adjustement in the case of correlated metabolomic variates
+
+Usage
+Meff(
+  features,
+  n.permutation = NULL,
+  method = "ecorr",
+  big.mat = FALSE,
+  alpha = NULL,
+  verbose = TRUE
+)
+Arguments:
+* `features` a data frame of `n` observations (rows) and `M` features e.g. metabolic profiles (columns).
+* `methods` a string with possible values `ecorr` (empirical correlation), or `scorr` (shrinkage correlation). Default to `ecorr`.
+* `alpha` an optional probability value. Default to `alpha`=0.05. 
+* `big.mat`	an optional logic value to be set to `TRUE` when dealing with a very large set of feature. Default to `FALSE`.
+
+Outputs:
+* Meff_Nyholt closed-form expression of the effective number of tests based on 
+[Nyholt (2004)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1181954/) 
+* Meff_Liji closed-form expression of the effective number of tests based on 
+[Li & Ji (2005)](https://www.ncbi.nlm.nih.gov/pubmed/16077740) 
+* Meff_Gao closed-form expression of the effective number of tests based on 
+[Gao (2008)](https://www.ncbi.nlm.nih.gov/pubmed/18271029)
+* Meff_Galwey closed-form expression of the effective number of tests based on 
+[Galwey (2009)](https://onlinelibrary.wiley.com/doi/10.1002/gepi.20408)
+* Meff_Bonferroni closed-form expression of the effective number of tests based on 
+[Bonferroni (1963)](https://en.wikipedia.org/wiki/Bonferroni_correction)
+* Meff_Sidak closed-form expression of the effective number of tests based on 
+[Sidak (1967)](https://en.wikipedia.org/wiki/%C5%A0id%C3%A1k_correction) 
+* Meff_MWSL the proposed closed-form expression of the effective number of tests 
+* `res.Meff_MWSL` the vector of result estimates: 
+  - `MWSL` = metabolome-wide significance level (MWSL);
+  - `MWSL_CI.up` = upper value `alpha`\%-confidence interval MWSL;
+  - `MWSL_CI.low` = lower value `alpha`\%-confidence interval MWSL.
+  - `ENT` = effective number of tests (ENT);
+  - `ENT_CI.up` = upper value `alpha`\%-confidence interval ENT;
+  - `ENT_CI.low` = lower value `alpha`\%-confidence interval ENT;
+  - `R.percent` = ENT/M.
+
+
 
 ## Section 4: Identification of outcome-specific differentially regulated  metabolites
