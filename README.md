@@ -289,7 +289,7 @@ Arguments:
 * `features` a data frame of `n` observations (rows) and `M` features e.g. metabolic profiles (columns).
 * `methods` a string with possible values `ecorr` (empirical correlation), or `scorr` (shrinkage correlation). Default to `ecorr`.
 * `alpha` an optional probability value. Default to `alpha`=0.05. 
-* `big.mat`	an optional logic value to be set to `TRUE` when dealing with a very large set of feature. Default to `FALSE`.
+* `big.mat`	an optional logic value to be set to `TRUE` when dealing with a very large set of features. Default to `FALSE`.
 
 Outputs:
 * `Meff_Nyholt` closed-form expression of the effective number of tests based on 
@@ -320,6 +320,7 @@ Run the function:
 rmesa_Meff_ecorr <- Meff(features=features,
                          n.permutation=100000,
                          method='ecorr',
+			 big.mat=FALSE,
                          alpha=0.05)
 ```
 
