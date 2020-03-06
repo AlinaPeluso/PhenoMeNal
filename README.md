@@ -387,10 +387,10 @@ res.mesa_DEtest_count
 ```
 |               |FWER\.Bonf |FWER\.MWSL |FDR\.BH |
 |---------------|-----------|-----------|--------|
-|  glucose      |      184  |     195   |352     |
-|  logGlucose   |      185  |     195   |351     |
-|  BMI          |      124  |     128   |204     |
-|  logBMI       |      125  |     132   |213     |
+|  glucose      |      185  |     198   |352     |
+|  logGlucose   |      191  |     197   |357     |
+|  BMI          |      124  |     131   |200     |
+|  logBMI       |      124  |     130   |210     |
 
 The FWER approach based on the MWSL estimation allows for the identification of a number of differentially regulated variates less than the too liberal BH correction and greater than the highly conservative Bonferroni correction. The number of differentially regulated variates is stable when considering transformations of the clinical outcome measures.
 
