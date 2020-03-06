@@ -106,9 +106,9 @@ t(round(sapply(MESA_binned[,c(1:4)], function(x) c(mean=mean(x),sd=sd(x),median=
 | outcome      | mean   | sd    | median | min    | max    |
 |--------------|--------|-------|--------|--------|--------|
 | glucose      | 97\.55 | 29\.6 | 90     | 38     | 507    |
-| log\_glucose | 4\.55  | 0\.22 | 4\.5   | 3\.64  | 6\.23  |
-| bmi          | 28\.14 | 5\.39 | 27\.34 | 15\.36 | 61\.86 |
-| log\_bmi     | 3\.32  | 0\.18 | 3\.31  | 2\.73  | 4\.12  |
+| logGlucose   | 4\.55  | 0\.22 | 4\.5   | 3\.64  | 6\.23  |
+| BMI          | 28\.14 | 5\.39 | 27\.34 | 15\.36 | 61\.86 |
+| logBMI       | 3\.32  | 0\.18 | 3\.31  | 2\.73  | 4\.12  |
 
 
 Plot of the distributions of the clinical outcomes measures:
@@ -176,14 +176,14 @@ Explore the results:
 rmesa_FWERperm
 ```
 
-Glucose
+glucose
 |          | MWSL       | MWSL\_CI\.up | MWSL\_CI\.low | ENT      | ENT\_CI\.up | ENT\_CI\.low | R\.percent | t1err\.percent |
 |----------|------------|--------------|---------------|----------|-------------|--------------|------------|----------------|
 | identity | 0\.0000685 | 0\.0000665   | 0\.0000713    | 729\.803 | 751\.496    | 701\.647     | 111\.42    | 4\.95          |
 | mN       | 0\.0001430 | 0\.0001380   | 0\.0001508    | 349\.737 | 362\.19     | 331\.658     | 53\.39     | 4\.97          |
 | mlogN    | 0\.0001376 | 0\.0001296   | 0\.0001447    | 363\.358 | 385\.699    | 345\.604     | 55\.47     | 5\.14          |
 
-log(Glucose)
+logGlucose
 |          | MWSL       | MWSL\_CI\.up | MWSL\_CI\.low | ENT      | ENT\_CI\.up | ENT\_CI\.low | R\.percent | t1err\.percent |
 |----------|------------|--------------|---------------|----------|-------------|--------------|------------|----------------|
 | identity | 0\.0001018 | 0\.0000982   | 0\.0001053    | 491\.344 | 508\.917    | 474\.867     | 75\.01     | 5\.06          |
@@ -197,7 +197,7 @@ BMI
 | mN       | 0\.0001470 | 0\.0001401   | 0\.0001534    | 340\.142 | 357\.0032   | 325\.845     | 51\.93     | 5\.20          |
 | mlogN    | 0\.0001402 | 0\.0001345   | 0\.0001468    | 356\.707 | 371\.7413   | 340\.712     | 54\.46     | 5\.00          |
 
-log(BMI)
+logBMI
 |          | MWSL       | MWSL\_CI\.up | MWSL\_CI\.low | ENT      | ENT\_CI\.up | ENT\_CI\.low | R\.percent | t1err\.percent |
 |----------|------------|--------------|---------------|----------|-------------|--------------|------------|----------------|
 | identity | 0\.0001313 | 0\.0001266   | 0\.0001377    | 380\.688 | 394\.8619   | 363\.169     | 58\.12     | 5\.08          |
@@ -250,13 +250,6 @@ From the conventional permutation procedure applied to the BINNED data, when the
 ## Section 3: Closed form expression eigenvalues-based MWSL and ENT estimation
 
 The empirical method of computing the permutation test p-value is hampered by the fact that a very large number of permutation is required to correctly estimate small, and therefore interesting p-values. Thus, the `MWSL::Meff` allows for an efficient approximation alternative. To distinguish from the effective number of non-redundant variates from the permutation procedure which has been defined as `ENT`, here we refer to the estimate from this practical approximation approach as `Meff`. The approximation is based on the spectral decomposition of the correlation matrix of the metabolomics variates, and allows for the comparison of the proposed estimate with methods of interest from the genomics field which proposed a similar formulation based on the same concept.
-
-We propose the following formulation
-$$
-\textrm{Meff}_{\textrm{MWSL}} = {\left( \frac{\sum_{m=1}^M{\sqrt{\lambda_m}}}{\log (\lambda_1)} \right) }^{2} \, \Big/ \, \left( \frac{\sum_{m=1}^M{\lambda_m}}{\lambda_1} + \sqrt{\lambda_1} \right)
-$$
-where $\lambda_m$ with $m=1,\ldots,M$ are the estimated eigenvalues from the correlation matrix of the metabolites concentrations. Rather than the variance of the $\lambda$s, the first eigenvalue $\lambda_1$ is directly called in the formulation as it measures the primary cluster in the matrix, its number of variables, and the average correlation among the features. 
-
 
 Arguments:
 * `features` a data frame of `n` observations (rows) and `M` features e.g. metabolic profiles (columns).
@@ -333,7 +326,18 @@ rmesa_Meff_ecorr$res.Meff_MWSL
 
 ## Section 4: Identification of outcome-specific differentially regulated  metabolites
 
-dentification of differentially regulated metabolomics variates directly linked to a specified outcome (e.g. disease risk). This includes the case of continuous outcomes both symmetric and skewed, as well as the case of a binary (0/1) outcome, and a countable outcome taking discrete values 0,1,2,3,$...$, as well as a survival time-to-event outcome. Once the appropriate analysis has been performed the metabolites of interest can be identified comparing the respective p-value to the the adjusted thresold (MWSL or Meff). When the raw p-value corresponding to a certain feature is smaller than the adjusted thresold we identify that metabolomic variate as significant. For the other metabolites we conclude that there is no association between the changes in the outcome variable and the shifts in these features.
+This section focus on identification of differentially regulated metabolomics variates directly linked to a specified outcome (e.g. disease risk). The procedure supports various outcome type i.e. continuous outcomes both symmetric and skewed, binary (0/1) outcome, countable outcome taking discrete values 0,1,2,3,$...$, as well as a survival time-to-event outcome. 
+
+| Outcome type                 | Model                               | R function                         |
+|------------------------------|-------------------------------------|------------------------------------|
+| continuous \(symmetric\)     | OLS regression                      | stats::lm                          |
+| continuous \(skewed\)        | Median quantile regression          | quantreg::rq\(tau=\.5\)            |
+| binary \(0/1\)               | Logistic regression                 | stats::glm\(family="binomial"\)    |
+| count \(equidispersed\)      | GLM Poisson regression              | stats::glm\(family="poisson"\)     |
+| count \(overdispersed\)      | Negative Binomial regression        | glm\(family="negative\.binomial"\) |
+| survival \(time\-to\-event\) | Cox proportional hazards regression | survival::coxph                    |
+
+Once the appropriate analysis has been performed the metabolites of interest can be identified comparing the respective p-value to the the adjusted thresold (MWSL or Meff). When the raw p-value corresponding to a certain feature is smaller than the adjusted thresold we identify that metabolomic variate as significant. For the other metabolites we conclude that there is no association between the changes in the outcome variable and the shifts in these features.
 
 Arguments:
 * `outcome` a vector of `n` data point values of a continuous (both symmetric and skewed), discrete binary (0/1) or count outcome, or a data frame with `n` observations and column variables `time` (or `time1` and `time2`) and `status` for a time-to-event survival outcome.
@@ -368,19 +372,31 @@ for (i in 1:ncol(outcomes)){
 
 Explore the results:
 
-The number of differentially regulated metabolomics variates for each clinical outcomes can be accessed as
+A Venn plot is generated for the visualisation of the number of identified differentially regulated metabolomics variates when employing the Bonferroni, the Benjamini-Hochberg (BH, FDR), and the MWSL (FWER) correction.
+
+<p align="center">
+<img width="700" src="./Figures/Venn_plot_DEtest.png">
+</p>
+
+
+The counts of the differentially regulated metabolomics variates for each clinical outcomes can be accessed as
 ```
 res.mesa_DEtest_count <- do.call(rbind, rmesa_DEtest_count)
 rownames(res.mesa_DEtest_count) <- c('glucose','logGlucose','BMI','logBMI')
 res.mesa_DEtest_count
 ```
+|               |FWER\.Bonf |FWER\.MWSL |FDR\.BH |
+|---------------|-----------|-----------|--------|
+|  glucose      |      184  |     195   |352     |
+|  logGlucose   |      185  |     195   |351     |
+|  BMI          |      124  |     128   |204     |
+|  logBMI       |      125  |     132   |213     |
 
-A Venn plot for the visualisation of the number of identified differentially regulated metabolomics variates when employing the Bonferroni, the Benjamini-Hochberg (BH, FDR), and the MWSL (FWER) correction can be accessed as
+The FWER approach based on the MWSL estimation allows for the identification of a number of differentially regulated variates less than the too liberal BH correction and greater than the highly conservative Bonferroni correction. The number of differentially regulated variates is stable when considering transformations of the clinical outcome measures.
 
 
-The FWER approach based on the MWSL estimation allows for the identification of a number of differentially regulated variates lower than the too liberal BH correction and greater than the highly conservative Bonferroni correction. The number of number of differentially regulated variates is stable when considering transformations of the clinical outcome considered.
 
-The list of differentially regulated metabolomics variates for a specific clinical outcome e.g. `glucose` can be accessed as
+The list of differentially regulated metabolomics variates identified via the MWSL approach for a specific clinical outcome e.g. `glucose` can be accessed as
 ```
 rmesa_DEtest[["glucose"]][["res.DE_names"]][["FWER.MWSL"]]
 ```
