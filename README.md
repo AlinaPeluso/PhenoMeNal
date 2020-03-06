@@ -249,17 +249,15 @@ From the conventional permutation procedure applied to the BINNED data, when the
 
 ## Section 3: Closed form expression eigenvalues-based MWSL and ENT estimation
 
-Approximation methods based on the spectral decomposition of the correlation matrix of the metabolomics variates are employed to estimate a closed-form-expression significance level to be used for multiple tests adjustement in the case of correlated metabolomic variates
+The empirical method of computing the permutation test p-value is hampered by the fact that a very large number of permutation is required to correctly estimate small, and therefore interesting p-values. Thus, the `MWSL::Meff` allows for an efficient approximation alternative. To distinguish from the effective number of non-redundant variates from the permutation procedure which has been defined as `ENT`, here we refer to the estimate from this practical approximation approach as `Meff`. The approximation is based on the spectral decomposition of the correlation matrix of the metabolomics variates, and allows for the comparison of the proposed estimate with methods of interest from the genomics field which proposed a similar formulation based on the same concept.
 
-Usage
-Meff(
-  features,
-  n.permutation = NULL,
-  method = "ecorr",
-  big.mat = FALSE,
-  alpha = NULL,
-  verbose = TRUE
-)
+We propose the following formulation
+$$
+\textrm{Meff}_{\textrm{MWSL}} = {\left( \frac{\sum_{m=1}^M{\sqrt{\lambda_m}}}{\log (\lambda_1)} \right) }^{2} \, \Big/ \, \left( \frac{\sum_{m=1}^M{\lambda_m}}{\lambda_1} + \sqrt{\lambda_1} \right)
+$$
+where $\lambda_m$ with $m=1,\ldots,M$ are the estimated eigenvalues from the correlation matrix of the metabolites concentrations. Rather than the variance of the $\lambda$s, the first eigenvalue $\lambda_1$ is directly called in the formulation as it measures the primary cluster in the matrix, its number of variables, and the average correlation among the features. 
+
+
 Arguments:
 * `features` a data frame of `n` observations (rows) and `M` features e.g. metabolic profiles (columns).
 * `methods` a string with possible values `ecorr` (empirical correlation), or `scorr` (shrinkage correlation). Default to `ecorr`.
@@ -289,6 +287,101 @@ Outputs:
   - `ENT_CI.low` = lower value `alpha`\%-confidence interval ENT;
   - `R.percent` = ENT/M.
 
+Run the function:
+
+```
+rmesa_Meff_ecorr <- Meff(features=features,
+                         n.permutation=100000,
+                         method='ecorr',
+                         alpha=0.05)
+```
+
+Explore the results:
+```
+mat.rmesa_Meff_ecorr <- rbind(Meff_Nyholt=rmesa_Meff_ecorr$Meff_Nyholt,
+                              Meff_Liji=rmesa_Meff_ecorr$Meff_Liji,
+                              Meff_Gao=rmesa_Meff_ecorr$Meff_Gao,
+                              Meff_Galwey=rmesa_Meff_ecorr$Meff_Galwey,
+                              Meff_Bonferroni=rmesa_Meff_ecorr$Meff_Bonferroni,
+                              Meff_Sidak=rmesa_Meff_ecorr$Meff_Sidak,
+                              Meff_MWSL=rmesa_Meff_ecorr$Meff_MWSL);
+mat.rmesa_Meff_ecorr
+```
+
+| Method           | Estimate | R(%) |
+|------------------|----------|------|
+| Meff\_Nyholt     | 611      | 93%  |
+| Meff\_Liji       | 226      | 35%  |
+| Meff\_Gao        | 435      | 66%  |
+| Meff\_Galwey     | 201      | 31%  |
+| Meff\_Bonferroni | 655      | 100% |
+| Meff\_Sidak      | 639      | 98%  |
+| Meff\_MWSL       | 345      | 53%  |
+| ENT              | 352      | 54%  |
+
+The closed-form `Meff` value is a good approximation of the `ENT` estimate from the permutation procedure.
+
+The `MWSL` estimate can be access as
+```
+rmesa_Meff_ecorr$res.Meff_MWSL
+```
+
+| MWSL         | MWSL\_CI\.up | MWSL\_CI\.low | ENT\_MWSL | ENT\_MWSL\_CI\.up | ENT\_MWSL\_CI\.low | R\.percent |
+|--------------|--------------|---------------|-----------|-------------------|--------------------|------------|
+| 0\.000145102 | 0\.000147141 | 0\.000142823  | 344\.5863 | 350\.0843         | 339\.8103          | 52\.61%    |
 
 
 ## Section 4: Identification of outcome-specific differentially regulated  metabolites
+
+dentification of differentially regulated metabolomics variates directly linked to a specified outcome (e.g. disease risk). This includes the case of continuous outcomes both symmetric and skewed, as well as the case of a binary (0/1) outcome, and a countable outcome taking discrete values 0,1,2,3,$...$, as well as a survival time-to-event outcome. Once the appropriate analysis has been performed the metabolites of interest can be identified comparing the respective p-value to the the adjusted thresold (MWSL or Meff). When the raw p-value corresponding to a certain feature is smaller than the adjusted thresold we identify that metabolomic variate as significant. For the other metabolites we conclude that there is no association between the changes in the outcome variable and the shifts in these features.
+
+Arguments:
+* `outcome` a vector of `n` data point values of a continuous (both symmetric and skewed), discrete binary (0/1) or count outcome, or a data frame with `n` observations and column variables `time` (or `time1` and `time2`) and `status` for a time-to-event survival outcome.
+* `features` a data frame of `n` observations (rows) and `M` features e.g. metabolic profiles (columns).
+* `confounders` an optional data frame of `n` observations (rows) and `P` fixed effects confounders (columns). Default to `confounders`=`NULL`.
+* `MWSL` metabolome-wide significance level (MWSL) estimated via the permutation-based approach (see `MWSL::FWERperm`) or via the via the closed-form-expression approach (see `MWSL::Meff`)
+* `alpha`	an optional probability value, default=0.05
+* `vennPlot` an optional logic value to be set to `TRUE` for the visualisation of the Venn-plot for the total count of differrentally regulated metabolomics variates when employing the Bonferroni, the Benjamini-Hochberg (FDR), and the MWSL (FWER) correction, respectively
+* `verbose`	an optional logic value to suppress some output status messages. Default to `TRUE`.
+
+Outputs:
+* `res.DE_count` total count of differrentally regulated metabolomics variates when employing the Bonferroni, the Benjamini-Hochberg (FDR), and the MWSL (FWER) correction, respectively.
+* `res.DE_names` names of the of differrentally regulated metabolomics variates when employing the Bonferroni, the Benjamini-Hochberg (FDR), and the MWSL (FWER) correction, respectively.
+* `Venn_plot Venn-plot` visualisation tool for the total count of differrentally regulated metabolomics variates when employing the Bonferroni, the Benjamini-Hochberg (FDR), and the MWSL (FWER) correction, respectively.
+
+Run the function for all the clinical outcomes measures:
+```
+rmesa_DEtest <- rmesa_DEtest_count  <- list()
+names(rmesa_DEtest) <- c('glucose','logGlucose','BMI','logBMI')
+for (i in 1:ncol(outcomes)){
+  res_DEtest <- DEtest(outcome=outcomes[,i],
+                      features=features[,1:10],
+                      confounders=confounders,
+                      MWSL=0.000145102,
+                      alpha=0.05,
+                      vennPlot=TRUE)
+  rmesa_DEtest[[i]]<- res_DEtest
+  rmesa_DEtest_count[[i]]<- res_DEtest$res.DE_count
+}
+```
+
+
+Explore the results:
+
+The number of differentially regulated metabolomics variates for each clinical outcomes can be accessed as
+```
+res.mesa_DEtest_count <- do.call(rbind, rmesa_DEtest_count)
+rownames(res.mesa_DEtest_count) <- c('glucose','logGlucose','BMI','logBMI')
+res.mesa_DEtest_count
+```
+
+A Venn plot for the visualisation of the number of identified differentially regulated metabolomics variates when employing the Bonferroni, the Benjamini-Hochberg (BH, FDR), and the MWSL (FWER) correction can be accessed as
+
+
+The FWER approach based on the MWSL estimation allows for the identification of a number of differentially regulated variates lower than the too liberal BH correction and greater than the highly conservative Bonferroni correction. The number of number of differentially regulated variates is stable when considering transformations of the clinical outcome considered.
+
+The list of differentially regulated metabolomics variates for a specific clinical outcome e.g. `glucose` can be accessed as
+```
+rmesa_DEtest[["glucose"]][["res.DE_names"]][["FWER.MWSL"]]
+```
+
