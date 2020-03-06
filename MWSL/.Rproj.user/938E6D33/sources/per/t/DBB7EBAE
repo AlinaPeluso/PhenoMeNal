@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583288357839.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "683081962",
+    "id" : "DBB7EBAE",
+    "lastKnownWriteTime" : 1583250253,
+    "last_content_update" : 1583250253,
+    "path" : "~/Dropbox/Imperial/MWSL/R/final_v/MWSL/R/bigcor_shrink.R",
+    "project_path" : "R/bigcor_shrink.R",
+    "properties" : {
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

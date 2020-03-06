@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583282550257.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4127781876",
+    "id" : "A87C802",
+    "lastKnownWriteTime" : 1583291392,
+    "last_content_update" : 1583291392885,
+    "path" : "~/Dropbox/Imperial/MWSL/R/final_v/MWSL/R/fn_Meff.R",
+    "project_path" : "R/fn_Meff.R",
+    "properties" : {
+        "cursorPosition" : "4,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
