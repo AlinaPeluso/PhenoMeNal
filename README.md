@@ -265,19 +265,19 @@ Arguments:
 * `big.mat`	an optional logic value to be set to `TRUE` when dealing with a very large set of feature. Default to `FALSE`.
 
 Outputs:
-* Meff_Nyholt closed-form expression of the effective number of tests based on 
+* `Meff_Nyholt` closed-form expression of the effective number of tests based on 
 [Nyholt (2004)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1181954/) 
-* Meff_Liji closed-form expression of the effective number of tests based on 
+* `Meff_Liji` closed-form expression of the effective number of tests based on 
 [Li & Ji (2005)](https://www.ncbi.nlm.nih.gov/pubmed/16077740) 
-* Meff_Gao closed-form expression of the effective number of tests based on 
+* `Meff_Gao` closed-form expression of the effective number of tests based on 
 [Gao (2008)](https://www.ncbi.nlm.nih.gov/pubmed/18271029)
-* Meff_Galwey closed-form expression of the effective number of tests based on 
+* `Meff_Galwey` closed-form expression of the effective number of tests based on 
 [Galwey (2009)](https://onlinelibrary.wiley.com/doi/10.1002/gepi.20408)
-* Meff_Bonferroni closed-form expression of the effective number of tests based on 
+* `Meff_Bonferroni` closed-form expression of the effective number of tests based on 
 [Bonferroni (1963)](https://en.wikipedia.org/wiki/Bonferroni_correction)
-* Meff_Sidak closed-form expression of the effective number of tests based on 
+* `Meff_Sidak` closed-form expression of the effective number of tests based on 
 [Sidak (1967)](https://en.wikipedia.org/wiki/%C5%A0id%C3%A1k_correction) 
-* Meff_MWSL the proposed closed-form expression of the effective number of tests 
+* `Meff_MWSL` the proposed closed-form expression of the effective number of tests 
 * `res.Meff_MWSL` the vector of result estimates: 
   - `MWSL` = metabolome-wide significance level (MWSL);
   - `MWSL_CI.up` = upper value `alpha`\%-confidence interval MWSL;
