@@ -18,9 +18,9 @@ library(MWSL)
 
 ## Section 1: Exploratory analysis
 
-We aim to investigate the association between human serum $^{1}$H NMR metabolic profiles and various clinical outcomes in the Multi-Ethnic Study of Atherosclerosis ([MESA](https://academic.oup.com/aje/article/156/9/871/255904)). The data have been extensively described in this [paper](https://www.ncbi.nlm.nih.gov/pubmed/28823158).  
+We aim to investigate the association between human serum 1H NMR metabolic profiles and various clinical outcomes in the Multi-Ethnic Study of Atherosclerosis ([MESA](https://academic.oup.com/aje/article/156/9/871/255904)).  
 
-The original study considers three sets of NMR spectra data: (1) a standard water-suppressed one-dimensional spectrum (NOESY), and (2) a Carr-Purcell-Meiboom-Gill spectrum (CPMG), and (3) a lower resolution version of the CPMG data (BINNED). The BINNED version consists of `M = 655` features, while the NOESY and CPMG contain `M = 30,590` features. The BINNED data sample comprises of `n = 3500` individuals, while the NOESY and CPMG data have `n = 3,867` individuals. 
+The reference [paper](https://www.ncbi.nlm.nih.gov/pubmed/28823158) considers three sets of NMR spectra data: (1) a standard water-suppressed one-dimensional spectrum (NOESY), and (2) a Carr-Purcell-Meiboom-Gill spectrum (CPMG), and (3) a lower resolution version of the CPMG data (BINNED). The BINNED version consists of `M = 655` features, while the NOESY and CPMG contain `M = 30,590` features. The BINNED data sample comprises of `n = 3500` individuals, while the NOESY and CPMG data have `n = 3,867` individuals. 
 
 To illustrate the package capabilities, here we reproduce the results for the BINNED version of the data. 
 
@@ -156,19 +156,26 @@ methods <- c('identity','mN','mlogN')
 mat <- matrix(NA,3,8)
 colnames(mat) <- c('MWSL','MWSL_CI.up','MWSL_CI.low','ENT','ENT_CI.up','ENT_CI.low','R.percent','t1err.percent')
 rownames(mat) <- methods
-rmesa_FWERperm <- list(glucose=mat,log_glucose=mat,bmi=mat,log_bmi=mat);
+rmesa_FWERperm <- list(glucose=mat,log_glucose=mat,bmi=mat,log_bmi=mat)
+
+rmesa_pval <- list(glucose=mat,log_glucose=mat,bmi=mat,log_bmi=mat)
+rmesa_FWERperm <- list(glucose=mat,log_glucose=mat,bmi=mat,log_bmi=mat)
+allres_mesa <- list()
 for (j in 1:length(methods)){
   for (i in 1:ncol(outcomes)){
     rmesa <- FWERperm(outcome=outcomes[,i],
                       features=features,
                       confounders=confounders,
-                      n.permutation=10000,
+                      n.permutation=60,
                       method=methods[j],
                       verbose=F)
+    allres_mesa[[3*(i-1)+j]] <- rmesa
     rmesa_FWERperm[[i]][j,1:7] <- rmesa$res
     rmesa_FWERperm[[i]][j,8] <- rmesa$t1err.percent
   }
 }
+df.names <- expand.grid(methods, names(outcomes))
+names(allres_mesa) <- paste(df.names$Var1, df.names$Var2,sep='.')
 ```
 
 Explore the results:
@@ -205,8 +212,35 @@ logBMI
 | mlogN    | 0\.0001356 | 0\.0001296   | 0\.0001410    | 368\.722 | 385\.7733   | 354\.6       | 56\.29     | 4\.92          |
 
 
-The permutation procedure controls the FWER at the &alpha; level set it to 5%.
+The permutation procedure provides strong control of the FWER at the &alpha; level set it to 5% while it also incorporates the joint dependence structure between the test statistics. 
 
+We can inspect the distribution of p-values corresponding to the case where the multivariate Normal distribution is employed to simulate the set of features
+```
+hist(allres_mesa[["mN.glucose"]][["matPvals"]],main="Plot p-values under the null",breaks=50,xlab=NULL)
+```
+<p align="center">
+<img width="600" src="./Figures/pvals_h0.png">
+</p>
+
+The p-values have a uniform distribution as we have re-sampled under the true null hypothesis of no association. 
+
+
+We can also inspect the distribution of the minimum p-values corresponding to the case where the multivariate Normal distribution is employed to simulate the set of features
+```
+hist(allres_mesa[["mN.glucose"]][["q"]],main="Plot minimum p-values",breaks=150,xlab=NULL) 
+op <- par(cex = 1.5); alpha=0.05
+abline(v=rmesa_FWERperm$glucose[1,1],col="red",lwd=5)
+abline(v=rmesa_FWERperm$glucose[2,1],col="blue",lwd=5)
+abline(v=rmesa_FWERperm$glucose[3,1],col="brown",lwd=5)
+abline(v=1-(1-alpha)^(1/ncol(features)),col="green",lwd=5)
+abline(v=alpha/ncol(features),col="orange",lwd=5)
+legend("topright",c('perm_id','perm_mN','perm_mlogN','Sidak','Bonferroni'),fill=c("red","blue","brown","green","orange"))
+```
+<p align="center">
+<img width="600" src="./Figures/minpvals.png">
+</p>
+
+The procedure is less conservative than the Bonferroni or Sidak correction.
 
 
 Plot of the ENT estimates from the permutation procedure:
