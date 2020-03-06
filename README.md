@@ -118,7 +118,7 @@ for (i in 1:ncol(outcomes)){hist(outcomes[,i],main=names(outcomes)[i],xlab=NULL)
 for (i in 1:ncol(outcomes)){boxplot(outcomes[,i],main=names(outcomes)[i],xlab=NULL)}
 ```
 <p align="center">
-<img width="700" src="./Figures/plot_clinical_outcomes.png">
+<img width="600" src="./Figures/plot_clinical_outcomes.png">
 </p>
 
 
@@ -219,7 +219,7 @@ We can inspect the distribution of p-values corresponding to the case where the 
 hist(allres_mesa[["mN.glucose"]][["matPvals"]],main="Plot p-values under the null",breaks=50,xlab=NULL)
 ```
 <p align="center">
-<img width="600" src="./Figures/pvals_h0.png">
+<img width="500" src="./Figures/pvals_h0.png">
 </p>
 
 The p-values have a uniform distribution as we have re-sampled under the true null hypothesis of no association. 
@@ -237,7 +237,7 @@ abline(v=alpha/ncol(features),col="orange",lwd=5)
 legend("topright",c('perm_id','perm_mN','perm_mlogN','Sidak','Bonferroni'),fill=c("red","blue","brown","green","orange"))
 ```
 <p align="center">
-<img width="600" src="./Figures/minpvals.png">
+<img width="700" src="./Figures/minpvals.png">
 </p>
 
 The procedure is less conservative than the Bonferroni or Sidak correction.
